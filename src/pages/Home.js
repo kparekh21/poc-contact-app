@@ -55,6 +55,7 @@ const Home = () => {
         title: contact.title,
         productName: contact.product_name,
         repoName: contact.repository_name,
+        chat_username: contact.chat_username
       }));
 
       setContacts(mappedData);
