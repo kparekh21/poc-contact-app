@@ -16,13 +16,32 @@ const Home = () => {
   const [productFilter, setProductFilter] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Fetch contacts from API based on search text and type
+  // Helper function to fetch timezone for a given latitude and longitude
+const getTimezoneForLocation = async (zipCode, countryCode) => {
+    const username = 'kode'; // Your GeoNames username
+    try {
+      // Step 1: Get coordinates from postal code
+      const postalCodeUrl = `http://api.geonames.org/postalCodeSearchJSON?postalcode=${zipCode}&country=${countryCode}&maxRows=1&username=${username}`;
+      const postalResponse = await axios.get(postalCodeUrl);
+      const postalData = postalResponse.data.postalCodes?.[0];
+  
+      if (postalData) {
+        const { lat, lng } = postalData;
+  
+        // Step 2: Get timezone data using the coordinates
+        const timezoneUrl = `http://api.geonames.org/timezoneJSON?lat=${lat}&lng=${lng}&username=${username}`;
+        const timezoneResponse = await axios.get(timezoneUrl);
+        return timezoneResponse.data.time;
+      }
+    } catch (error) {
+      console.error("Error fetching timezone data:", error);
+    }
+    return null;
+  };
+  
   const fetchContacts = async (searchOption, searchText) => {
     try {
-      // Get the token from localStorage
       const token = localStorage.getItem('token');
-
-      // Determine the URL based on the search option
       let url = `${BASE_URL}`;
       if (searchOption === 'product') {
         url += `/product/${searchText}`;
@@ -31,36 +50,39 @@ const Home = () => {
       } else {
         url += `/${searchText}`;
       }
-
+  
       const response = await axios.get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      // Check the data based on the search type and map it accordingly
-      let data;
-      console.log(response)
+  
+      let data = [];
       if (searchOption === 'product') {
         data = response.data['Product details'];
       } else if (searchOption === 'repository') {
         data = response.data['Repository details'];
-      } else {
-        data = response.data['Repository details'];
       }
-
-      // Map API response to frontend required fields
-      const mappedData = data.map(contact => ({
-        firstName: contact.first_name,
-        lastName: contact.last_name,
-        email: contact.email_id,
-        location: `${contact.city}, ${contact.state}`,
-        title: contact.title,
-        productName: contact.product_name,
-        repoName: contact.repository_name,
-        chat_username: contact.chat_username
-      }));
-
+  
+      // Map API response to frontend required fields, including timezone
+      const mappedData = await Promise.all(
+        data.map(async contact => {
+          const timezone = await getTimezoneForLocation(contact.zipcode, contact.country);
+          console.log(timezone)
+          return {
+            firstName: contact.first_name,
+            lastName: contact.last_name,
+            email: contact.email_id,
+            location: `${contact.city}, ${contact.state}`,
+            title: contact.title,
+            productName: contact.product_name,
+            repoName: contact.repository_name,
+            chat_username: contact.chat_username,
+            timezone: timezone, // Adding timezone data
+          };
+        })
+      );
+  
       setContacts(mappedData);
       setFilteredContacts(mappedData);
       setCurrentIndex(0);
@@ -68,6 +90,7 @@ const Home = () => {
       console.error("Error fetching contacts:", error);
     }
   };
+  
 
   // Handle search from ContactSearchForm
   const handleSearch = (filters) => {
