@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import ContactSearchForm from '../components/ContactSearchForm/ContactSearchForm';
 import ContactCard from '../components/ContactCard/ContactCard';
+
+const BASE_URL = 'https://collabconnect-y1zi.onrender.com/search';
 
 const Home = () => {
   const [contacts, setContacts] = useState([]);
@@ -10,49 +13,68 @@ const Home = () => {
   const [productFilter, setProductFilter] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const hardcodedContacts = [
-    {
-      firstName: 'Alice',
-      lastName: 'Johnson',
-      email: 'alice.johnson@example.com',
-      chatUserName: 'alice123',
-      location: 'Ashville, SC',
-      title: 'Security Engineer',
-      productName: 'Security Scanner',
-      repoName: 'security-scan-repo'
-    },
-    {
-      firstName: 'Bob',
-      lastName: 'Smith',
-      email: 'bob.smith@example.com',
-      chatUserName: 'bobsmith',
-      location: 'Lucerne, CH',
-      title: 'Backend Developer',
-      productName: 'API Framework',
-      repoName: 'api-framework-repo'
-    },
-    {
-      firstName: 'Charlie',
-      lastName: 'Brown',
-      email: 'charlie.brown@example.com',
-      chatUserName: 'charlieb',
-      location: 'Berlin, DE',
-      title: 'DevOps Engineer',
-      productName: 'Deployment Manager',
-      repoName: 'deployment-repo'
-    },
-  ];
+  // Fetch contacts from API based on search text and type
+  const fetchContacts = async (searchOption, searchText) => {
+    try {
+      // Get the token from localStorage
+      const token = localStorage.getItem('token');
 
-  const fetchAllContacts = () => {
-    setContacts(hardcodedContacts);
-    setFilteredContacts(hardcodedContacts);
+      // Determine the URL based on the search option
+      let url = `${BASE_URL}`;
+      if (searchOption === 'product') {
+        url += `/product/${searchText}`;
+      } else if (searchOption === 'repository') {
+        url += `/repository/${searchText}`;
+      } else {
+        url += `/${searchText}`;
+      }
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Check the data based on the search type and map it accordingly
+      let data;
+      if (searchOption === 'product') {
+        data = response.data['Product details'];
+      } else if (searchOption === 'repository') {
+        data = response.data['Repository details'];
+      } else {
+        data = response.data['Repository details'];
+      }
+
+      // Map API response to frontend required fields
+      const mappedData = data.map(contact => ({
+        firstName: contact.first_name,
+        lastName: contact.last_name,
+        email: contact.email_id,
+        location: `${contact.city}, ${contact.state}`,
+        title: contact.title,
+        productName: contact.product_name,
+        repoName: contact.repository_name,
+      }));
+
+      setContacts(mappedData);
+      setFilteredContacts(mappedData);
+      setCurrentIndex(0);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+    }
   };
 
-  const handleSearch = () => {
-    fetchAllContacts();
-    setCurrentIndex(0);
+  // Handle search from ContactSearchForm
+  const handleSearch = (filters) => {
+    const { productName, repoName } = filters;
+    if (productName) {
+      fetchContacts('product', productName);
+    } else if (repoName) {
+      fetchContacts('repository', repoName);
+    }
   };
 
+  // Filter contacts based on dropdown selections
   useEffect(() => {
     const filtered = contacts.filter(contact =>
       (!locationFilter || contact.location === locationFilter) &&
@@ -63,10 +85,12 @@ const Home = () => {
     setCurrentIndex(0);
   }, [locationFilter, repoFilter, productFilter, contacts]);
 
+  // Extract unique values for dropdown filters
   const uniqueLocations = [...new Set(contacts.map(contact => contact.location))];
   const uniqueRepoNames = [...new Set(contacts.map(contact => contact.repoName))];
   const uniqueProductNames = [...new Set(contacts.map(contact => contact.productName))];
 
+  // Navigation for the carousel
   const handleNext = () => {
     setCurrentIndex((prevIndex) =>
       prevIndex < filteredContacts.length - 1 ? prevIndex + 1 : 0

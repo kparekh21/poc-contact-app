@@ -23,8 +23,8 @@ const ContactSearchForm = ({ onSearch }) => {
       setError('Please enter a repository name.');
       return;
     }
-    if (searchOption === 'both' && (!filters.productName || !filters.repoName)) {
-      setError('Please enter both product name and repository name.');
+    if (searchOption === 'both' && (!filters.repoName)) {
+      setError('Please enter product name or repository name.');
       return;
     }
     
@@ -69,7 +69,7 @@ const ContactSearchForm = ({ onSearch }) => {
         </label>
       </div>
       <form onSubmit={handleSubmit}>
-        {(searchOption === 'product' || searchOption === 'both') && (
+        {(searchOption === 'product' ) && (
           <input
             type="text"
             placeholder="Enter Product Name"
@@ -78,10 +78,19 @@ const ContactSearchForm = ({ onSearch }) => {
             className="search-input"
           />
         )}
-        {(searchOption === 'repository' || searchOption === 'both') && (
+        {(searchOption === 'repository' ) && (
           <input
             type="text"
             placeholder="Enter Repository Name"
+            value={filters.repoName}
+            onChange={(e) => setFilters({ ...filters, repoName: e.target.value })}
+            className="search-input"
+          />
+        )}
+        {(searchOption === 'both') && (
+          <input
+            type="text"
+            placeholder="Enter Product or Repository Name"
             value={filters.repoName}
             onChange={(e) => setFilters({ ...filters, repoName: e.target.value })}
             className="search-input"

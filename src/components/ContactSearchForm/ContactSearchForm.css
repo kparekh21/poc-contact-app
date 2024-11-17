@@ -9,42 +9,45 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-  }
+}
   
-  .search-form h2 {
+.search-form h2 {
     font-weight: bold;
-    font-size: 1.75rem; /* Make main heading slightly larger */
+    font-size: 1.75rem;
     color: #ffffff;
     text-align: center;
-    margin-bottom: 0.5rem; /* Reduce margin if needed */
+    margin-bottom: 0.5rem;
 }
 
 .search-form h3 {
-    font-weight: normal; /* Lighter font weight for subheading */
-    font-size: 1rem; /* Smaller font size for subheading */
-    color: #b0b0b0; /* Softer gray color for subheading */
+    font-weight: normal;
+    font-size: 1rem;
+    color: #b0b0b0;
     text-align: center;
-    margin-bottom: 1rem; /* Adjust spacing below subheading */
+    margin-bottom: 1rem;
 }
-  
-  
-  .search-options {
+
+.search-options {
     display: flex;
     justify-content: space-between;
     width: 100%;
     margin-bottom: 15px;
-  }
-  
-  .search-options label {
+}
+
+.search-options label {
+    display: flex; /* Aligns label and radio button inline */
+    align-items: center; /* Centers the radio button vertically */
     color: #b0b0b0;
+    font-size: 0.875rem;
     cursor: pointer;
-  }
-  
-  .search-options input[type="radio"] {
-    margin-right: 5px;
-  }
-  
-  .search-input {
+}
+
+.search-options input[type="radio"] {
+    margin-right: 4px; /* Adjust spacing as needed */
+    accent-color: #00d1b2; /* Matches button color */
+}
+
+.search-input {
     width: 100%;
     padding: 10px;
     margin: 10px 0;
@@ -53,13 +56,13 @@
     border-radius: 4px;
     color: #ffffff;
     text-align: center;
-  }
-  
-  .search-input::placeholder {
+}
+
+.search-input::placeholder {
     color: #757575;
-  }
-  
-  .search-button {
+}
+
+.search-button {
     width: 100%;
     padding: 10px;
     background-color: #00d1b2;
@@ -69,15 +72,20 @@
     cursor: pointer;
     font-weight: bold;
     margin-top: 10px;
-  }
-  
-  .search-button:hover {
-    background-color: #00b292;
-  }
+    transition: background-color 0.3s, transform 0.2s;
+}
 
-  .error-message {
-    color: #ff4d4f; /* Red color for visibility */
+.search-button:hover {
+    background-color: #00b292;
+    transform: scale(1.03); /* Slightly enlarge on hover */
+}
+
+.search-button:active {
+    transform: scale(0.98); /* Slightly shrink on click */
+}
+
+.error-message {
+    color: #ff4d4f;
     font-size: 0.875rem;
     margin-top: 0.5rem;
-  }
-  
+}
