@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './ContactSearchForm.css';
 
-const BASE_URL = 'https://collabconnect-y1zi.onrender.com/search';
+const BASE_URL = process.env.REACT_APP_BASE_URL;
 
 const ContactSearchForm = ({ onSearch }) => {
   const [searchOption, setSearchOption] = useState('product');
