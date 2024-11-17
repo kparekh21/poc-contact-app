@@ -36,7 +36,7 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        login(data.accessToken, data.user);
+        login(data.token, data.user);
 
         setToast({
           show: true,

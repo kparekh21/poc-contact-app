@@ -19,5 +19,6 @@ export const login = (token, userData) => {
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  localStorage.removeItem('isAuthenticated');  
   emitAuthChange();
 };
