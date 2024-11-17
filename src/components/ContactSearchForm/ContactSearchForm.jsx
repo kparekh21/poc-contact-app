@@ -10,8 +10,11 @@ const ContactSearchForm = ({ onSearch }) => {
   const [error, setError] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [typing, setTyping] = useState(false); // Flag to detect typing activity
 
   useEffect(() => {
+    if (!typing) return; // Only proceed if typing is true
+
     const debounceTimeout = setTimeout(() => {
       const searchText = searchOption === 'product' ? filters.productName : filters.repoName;
       if (searchText.length >= 3) {
@@ -20,10 +23,11 @@ const ContactSearchForm = ({ onSearch }) => {
         setSuggestions([]);
         setShowSuggestions(false);
       }
-    }, 500); // Debounce of 300ms
+      setTyping(false); // Reset typing flag after debounce
+    }, 500); // Debounce of 500ms
   
     return () => clearTimeout(debounceTimeout);
-  }, [filters.productName, filters.repoName, searchOption]); 
+  }, [filters.productName, filters.repoName, searchOption, typing]); 
   
   // Fetch autocomplete suggestions based on selected type
   const fetchSuggestions = async (type, query) => {
@@ -44,16 +48,19 @@ const ContactSearchForm = ({ onSearch }) => {
         },
       });
 
-      // Extract relevant details for autocomplete
+      // Extract relevant details for autocomplete and remove duplicates
       const dataKey = type === 'product' ? 'Product details' : 'Repository details';
       const suggestionsData = response.data[dataKey] || [];
+      const uniqueSuggestions = suggestionsData
+        .map((item) => ({
+          id: item.employee_id,
+          name: type === 'product' ? item.product_name : item.repository_name,
+        }))
+        .filter((suggestion, index, self) =>
+          index === self.findIndex((s) => s.name === suggestion.name)
+        );
 
-      const mappedSuggestions = suggestionsData.map((item) => ({
-        id: item.employee_id,
-        name: type === 'product' ? item.product_name : item.repository_name,
-      }));
-      console.log(mappedSuggestions)
-      setSuggestions(mappedSuggestions);
+      setSuggestions(uniqueSuggestions);
       setShowSuggestions(true);
     } catch (error) {
       console.error("Error fetching suggestions:", error);
@@ -91,6 +98,17 @@ const ContactSearchForm = ({ onSearch }) => {
     }
     setShowSuggestions(false);
     setSuggestions([]);
+    setTyping(false); // Ensure typing is false to prevent suggestions reappearing
+  };
+
+  const handleInputChange = (e) => {
+    setTyping(true); // Set typing to true to enable suggestions
+    const { value } = e.target;
+    if (searchOption === 'product') {
+      setFilters({ ...filters, productName: value });
+    } else {
+      setFilters({ ...filters, repoName: value });
+    }
   };
 
   return (
@@ -125,8 +143,9 @@ const ContactSearchForm = ({ onSearch }) => {
             type="text"
             placeholder="Enter Product Name"
             value={filters.productName}
-            onChange={(e) => setFilters({ ...filters, productName: e.target.value })}
+            onChange={handleInputChange}
             className="search-input"
+            onFocus={() => setShowSuggestions(true)}
           />
         )}
         {(searchOption === 'repository') && (
@@ -134,17 +153,9 @@ const ContactSearchForm = ({ onSearch }) => {
             type="text"
             placeholder="Enter Repository Name"
             value={filters.repoName}
-            onChange={(e) => setFilters({ ...filters, repoName: e.target.value })}
+            onChange={handleInputChange}
             className="search-input"
-          />
-        )}
-        {(searchOption === 'both') && (
-          <input
-            type="text"
-            placeholder="Enter Product or Repository Name"
-            value={filters.repoName}
-            onChange={(e) => setFilters({ ...filters, repoName: e.target.value })}
-            className="search-input"
+            onFocus={() => setShowSuggestions(true)}
           />
         )}
         {error && <p className="error-message">{error}</p>}
