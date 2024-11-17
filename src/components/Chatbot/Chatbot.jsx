@@ -13,7 +13,7 @@ const Chatbot = () => {
   useEffect(() => {
     const welcomeMessage = {
       role: 'bot',
-      content: `Hey, Welcome to CollabConnect chatbot! 👋\n\nI can help you with questions like:\n1. What is the location of team-2?\n2. Who is the POC for servicenow_backend repository?\n3. Which team works on the Security Scanner product?\n\nFeel free to ask me anything!`
+      content: `Hey, Welcome to CollabConnect chatbot! 👋\n\nI can help you with questions like:\n1. Who is the POC for servicenow_backend repository?\n2. Which team works on the Security Scanner product?\n\nFeel free to ask me anything!`
     };
     setMessages([welcomeMessage]);
   }, []);
