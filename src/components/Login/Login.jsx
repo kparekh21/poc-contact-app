@@ -1,23 +1,79 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { login } from '../auth';
+import Toast from '../Toast/Toast';
 import './Login.css';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
 
-  const handleSubmit = (e) => {
+  // Define handleChange function properly
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login attempt:', { email, password });
+
+    try {
+      const response = await fetch('https://collabconnect-y1zi.onrender.com/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        login(data.accessToken, data.user);
+
+        setToast({
+          show: true,
+          message: 'Login successful!',
+          type: 'success'
+        });
+
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
+      } else {
+        setToast({
+          show: true,
+          message: data.message || 'Login failed',
+          type: 'error'
+        });
+      }
+    } catch (error) {
+      setToast({
+        show: true,
+        message: 'An error occurred during login',
+        type: 'error'
+      });
+    }
   };
 
   return (
     <div className="auth-container">
-      <div className="auth-wrapper">
-        {/* <div className="logo">
-          <h1>Logo</h1>
-        </div> */}
+      {toast.show && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast({ show: false, message: '', type: 'error' })} 
+        />
+      )}
 
+      <div className="auth-wrapper">
         <div className="auth-header">
           <h2>Welcome back</h2>
           <p>Please enter your details to sign in.</p>
@@ -27,9 +83,10 @@ const Login = () => {
           <div className="form-group">
             <input
               type="email"
+              name="email"
               placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={formData.email}
+              onChange={handleChange}
               required
             />
           </div>
@@ -37,9 +94,10 @@ const Login = () => {
           <div className="form-group">
             <input
               type="password"
+              name="password"
               placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={handleChange}
               required
             />
           </div>
@@ -48,9 +106,6 @@ const Login = () => {
             <button type="submit" className="submit-button">
               Sign in
             </button>
-            <p className="auth-link">
-              Don't have an account? <Link to="/signup">Sign up</Link>
-            </p>
           </div>
         </form>
       </div>
