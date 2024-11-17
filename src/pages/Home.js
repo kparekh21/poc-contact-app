@@ -37,6 +37,7 @@ const Home = () => {
 
       // Check the data based on the search type and map it accordingly
       let data;
+      console.log(response)
       if (searchOption === 'product') {
         data = response.data['Product details'];
       } else if (searchOption === 'repository') {

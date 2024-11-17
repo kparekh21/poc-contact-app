@@ -10,7 +10,7 @@
     flex-direction: column;
     align-items: center;
 }
-  
+
 .search-form h2 {
     font-weight: bold;
     font-size: 1.75rem;
@@ -29,22 +29,22 @@
 
 .search-options {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
     width: 100%;
-    margin-bottom: 15px;
+    margin-bottom: 10px; /* Reduce margin to bring buttons closer */
 }
 
 .search-options label {
-    display: flex; /* Aligns label and radio button inline */
-    align-items: center; /* Centers the radio button vertically */
+    display: flex;
+    align-items: center;
     color: #b0b0b0;
     font-size: 0.875rem;
     cursor: pointer;
 }
 
 .search-options input[type="radio"] {
-    margin-right: 4px; /* Adjust spacing as needed */
-    accent-color: #00d1b2; /* Matches button color */
+    margin-right: 4px;
+    accent-color: #00d1b2;
 }
 
 .search-input {
@@ -77,15 +77,41 @@
 
 .search-button:hover {
     background-color: #00b292;
-    transform: scale(1.03); /* Slightly enlarge on hover */
+    transform: scale(1.03);
 }
 
 .search-button:active {
-    transform: scale(0.98); /* Slightly shrink on click */
+    transform: scale(0.98);
 }
 
 .error-message {
     color: #ff4d4f;
     font-size: 0.875rem;
     margin-top: 0.5rem;
+}
+
+.suggestions-dropdown {
+    position: absolute;
+    background-color: #2a2a2a;
+    color: #ffffff;
+    width: calc(100% - 20px); /* Matches the input field width (subtracting padding) */
+    max-width: 500px; /* Limits the max width */
+    border-radius: 4px;
+    max-height: 150px;
+    overflow-y: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    margin-top: 4px;
+    border: 1px solid #444444;
+}
+
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #444444;
+    transition: background-color 0.3s;
+}
+
+.suggestion-item:hover {
+    background-color: #00b292;
 }
