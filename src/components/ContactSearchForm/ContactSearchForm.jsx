@@ -10,10 +10,10 @@ const ContactSearchForm = ({ onSearch }) => {
   const [error, setError] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [typing, setTyping] = useState(false); // Flag to detect typing activity
+  const [typing, setTyping] = useState(false);
 
   useEffect(() => {
-    if (!typing) return; // Only proceed if typing is true
+    if (!typing) return;
 
     const debounceTimeout = setTimeout(() => {
       const searchText = searchOption === 'product' ? filters.productName : filters.repoName;
@@ -23,47 +23,52 @@ const ContactSearchForm = ({ onSearch }) => {
         setSuggestions([]);
         setShowSuggestions(false);
       }
-      setTyping(false); // Reset typing flag after debounce
-    }, 500); // Debounce of 500ms
-  
+      setTyping(false);
+    }, 500);
+
     return () => clearTimeout(debounceTimeout);
-  }, [filters.productName, filters.repoName, searchOption, typing]); 
-  
-  // Fetch autocomplete suggestions based on selected type
+  }, [filters.productName, filters.repoName, searchOption, typing]);
+
+  // Fetch autocomplete suggestions with error handling
   const fetchSuggestions = async (type, query) => {
     try {
       let url = `${BASE_URL}`;
-      if (type === 'product') {
-        url += `/product/${query}`;
-      } else if (type === 'repository') {
-        url += `/repository/${query}`;
-      } else {
-        url += `/${query}`;
-      }
+      if (type === 'product') url += `/product/${query}`;
+      else if (type === 'repository') url += `/repository/${query}`;
+      else url += `/${query}`;
 
       const token = localStorage.getItem('token');
       const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Extract relevant details for autocomplete and remove duplicates
       const dataKey = type === 'product' ? 'Product details' : 'Repository details';
       const suggestionsData = response.data[dataKey] || [];
-      const uniqueSuggestions = suggestionsData
-        .map((item) => ({
-          id: item.employee_id,
-          name: type === 'product' ? item.product_name : item.repository_name,
-        }))
-        .filter((suggestion, index, self) =>
-          index === self.findIndex((s) => s.name === suggestion.name)
-        );
 
-      setSuggestions(uniqueSuggestions);
-      setShowSuggestions(true);
+      if (suggestionsData.length === 0) {
+        setError(`No ${type} found`);
+        setSuggestions([]);
+      } else {
+        const uniqueSuggestions = suggestionsData
+          .map((item) => ({
+            id: item.employee_id,
+            name: type === 'product' ? item.product_name : item.repository_name,
+          }))
+          .filter((suggestion, index, self) =>
+            index === self.findIndex((s) => s.name === suggestion.name)
+          );
+
+        setSuggestions(uniqueSuggestions);
+        setShowSuggestions(true);
+        setError('');
+      }
     } catch (error) {
-      console.error("Error fetching suggestions:", error);
+      if (error.response && error.response.status === 404) {
+        setError(`No ${type} found`);
+      } else {
+        setError('Error fetching suggestions. Please try again later.');
+      }
+      setSuggestions([]);
     }
   };
 
@@ -83,7 +88,7 @@ const ContactSearchForm = ({ onSearch }) => {
       setError(`Please enter a ${searchOption === 'product' ? 'product name' : 'repository name'}.`);
       return;
     }
-    
+
     setError('');
     setSuggestions([]);
     setShowSuggestions(false);
@@ -98,11 +103,11 @@ const ContactSearchForm = ({ onSearch }) => {
     }
     setShowSuggestions(false);
     setSuggestions([]);
-    setTyping(false); // Ensure typing is false to prevent suggestions reappearing
+    setTyping(false);
   };
 
   const handleInputChange = (e) => {
-    setTyping(true); // Set typing to true to enable suggestions
+    setTyping(true);
     const { value } = e.target;
     if (searchOption === 'product') {
       setFilters({ ...filters, productName: value });
@@ -160,7 +165,6 @@ const ContactSearchForm = ({ onSearch }) => {
         )}
         {error && <p className="error-message">{error}</p>}
 
-        {/* Suggestions Dropdown */}
         {showSuggestions && suggestions.length > 0 && (
           <div className="suggestions-dropdown">
             {suggestions.map((suggestion) => (
@@ -174,7 +178,7 @@ const ContactSearchForm = ({ onSearch }) => {
             ))}
           </div>
         )}
-        
+
         <button type="submit" className="search-button">Search</button>
       </form>
     </div>
