@@ -1,40 +1,125 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import './ContactSearchForm.css';
+
+const BASE_URL = process.env.REACT_APP_BASE_URL;
 
 const ContactSearchForm = ({ onSearch }) => {
   const [searchOption, setSearchOption] = useState('product');
   const [filters, setFilters] = useState({ productName: '', repoName: '' });
-  const [error, setError] = useState(''); // State to hold error message
+  const [error, setError] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [typing, setTyping] = useState(false);
+
+  useEffect(() => {
+    if (!typing) return;
+
+    const debounceTimeout = setTimeout(() => {
+      const searchText = searchOption === 'product' ? filters.productName : filters.repoName;
+      if (searchText.length >= 3) {
+        fetchSuggestions(searchOption, searchText);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+      setTyping(false);
+    }, 500);
+
+    return () => clearTimeout(debounceTimeout);
+  }, [filters.productName, filters.repoName, searchOption, typing]);
+
+  // Fetch autocomplete suggestions with error handling
+  const fetchSuggestions = async (type, query) => {
+    try {
+      let url = `${BASE_URL}`;
+      if (type === 'product') url += `/product/${query}`;
+      else if (type === 'repository') url += `/repository/${query}`;
+      else url += `/${query}`;
+
+      const token = localStorage.getItem('token');
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const dataKey = type === 'product' ? 'Product details' : 'Repository details';
+      const suggestionsData = response.data[dataKey] || [];
+
+      if (suggestionsData.length === 0) {
+        setError(`No ${type} found`);
+        setSuggestions([]);
+      } else {
+        const uniqueSuggestions = suggestionsData
+          .map((item) => ({
+            id: item.employee_id,
+            name: type === 'product' ? item.product_name : item.repository_name,
+          }))
+          .filter((suggestion, index, self) =>
+            index === self.findIndex((s) => s.name === suggestion.name)
+          );
+
+        setSuggestions(uniqueSuggestions);
+        setShowSuggestions(true);
+        setError('');
+      }
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        setError(`No ${type} found`);
+      } else {
+        setError('Error fetching suggestions. Please try again later.');
+      }
+      setSuggestions([]);
+    }
+  };
 
   const handleOptionChange = (e) => {
     setSearchOption(e.target.value);
-    setFilters({ productName: '', repoName: '' }); // Reset filters when option changes
-    setError(''); // Clear any error message when changing option
+    setFilters({ productName: '', repoName: '' });
+    setError('');
+    setSuggestions([]);
+    setShowSuggestions(false);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Validation logic
-    if (searchOption === 'product' && !filters.productName) {
-      setError('Please enter a product name.');
+    const searchText = searchOption === 'product' ? filters.productName : filters.repoName;
+
+    if (!searchText) {
+      setError(`Please enter a ${searchOption === 'product' ? 'product name' : 'repository name'}.`);
       return;
     }
-    if (searchOption === 'repository' && !filters.repoName) {
-      setError('Please enter a repository name.');
-      return;
+
+    setError('');
+    setSuggestions([]);
+    setShowSuggestions(false);
+    onSearch({ productName: filters.productName, repoName: filters.repoName });
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    if (searchOption === 'product') {
+      setFilters({ ...filters, productName: suggestion.name });
+    } else {
+      setFilters({ ...filters, repoName: suggestion.name });
     }
-    if (searchOption === 'both' && (!filters.productName || !filters.repoName)) {
-      setError('Please enter both product name and repository name.');
-      return;
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setTyping(false);
+  };
+
+  const handleInputChange = (e) => {
+    setTyping(true);
+    const { value } = e.target;
+    if (searchOption === 'product') {
+      setFilters({ ...filters, productName: value });
+    } else {
+      setFilters({ ...filters, repoName: value });
     }
-    
-    setError(''); // Clear error if validation passes
-    onSearch(filters); // Proceed with search if validation passes
   };
 
   return (
     <div className="search-form">
-      <h2>Find Point Of Contact For Any Project</h2>
+      <h2>CollabConnect</h2>
+      <h3>Find Point Of Contact For Any Project</h3>
       <div className="search-options">
         <label>
           <input
@@ -56,37 +141,44 @@ const ContactSearchForm = ({ onSearch }) => {
           />
           Repository Name
         </label>
-        <label>
-          <input
-            type="radio"
-            name="searchOption"
-            value="both"
-            checked={searchOption === 'both'}
-            onChange={handleOptionChange}
-          />
-          Both
-        </label>
       </div>
       <form onSubmit={handleSubmit}>
-        {(searchOption === 'product' || searchOption === 'both') && (
+        {(searchOption === 'product') && (
           <input
             type="text"
             placeholder="Enter Product Name"
             value={filters.productName}
-            onChange={(e) => setFilters({ ...filters, productName: e.target.value })}
+            onChange={handleInputChange}
             className="search-input"
+            onFocus={() => setShowSuggestions(true)}
           />
         )}
-        {(searchOption === 'repository' || searchOption === 'both') && (
+        {(searchOption === 'repository') && (
           <input
             type="text"
             placeholder="Enter Repository Name"
             value={filters.repoName}
-            onChange={(e) => setFilters({ ...filters, repoName: e.target.value })}
+            onChange={handleInputChange}
             className="search-input"
+            onFocus={() => setShowSuggestions(true)}
           />
         )}
-        {error && <p className="error-message">{error}</p>} {/* Error message display */}
+        {error && <p className="error-message">{error}</p>}
+
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="suggestions-dropdown">
+            {suggestions.map((suggestion) => (
+              <div
+                key={suggestion.id}
+                onClick={() => handleSuggestionClick(suggestion)}
+                className="suggestion-item"
+              >
+                {suggestion.name}
+              </div>
+            ))}
+          </div>
+        )}
+
         <button type="submit" className="search-button">Search</button>
       </form>
     </div>
