@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ContactSearchForm from '../components/ContactSearchForm/ContactSearchForm';
 import ContactCard from '../components/ContactCard/ContactCard';
+import Chatbot from '../components/Chatbot/Chatbot';
+import './Home.css';
 
-const BASE_URL = 'https://collabconnect-y1zi.onrender.com/search';
+const BASE_URL = process.env.REACT_APP_BASE_URL;
 
 const Home = () => {
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [locationFilter, setLocationFilter] = useState('');
@@ -106,7 +109,7 @@ const Home = () => {
   };
 
   return (
-    <div className="main-content px-4 sm:px-8 lg:px-16 pt-20">
+    <div className="main-content relative min-h-screen px-4 sm:px-8 lg:px-16 pt-20">
       <ContactSearchForm onSearch={handleSearch} />
 
       {contacts.length > 0 && (
@@ -170,6 +173,43 @@ const Home = () => {
           </div>
         </div>
       )}
+
+      {/* Chatbot */}
+      <div className="fixed bottom-6 right-6 z-50">
+        {isChatbotOpen && (
+          <div className="absolute bottom-16 right-0 w-96 h-[500px] rounded-lg shadow-xl overflow-hidden">
+            <div className="text-white p-4 flex justify-between items-center" style={{ backgroundColor: '#00d1b2' }}>  
+              <h3 className="text-lg font-semibold">Chat Assistant</h3>
+              <button 
+                onClick={() => setIsChatbotOpen(false)}
+                className="text-white hover:text-gray-200"
+              >
+                ×
+              </button>
+            </div>
+            <div className="h-[calc(100%-64px)]">
+              <Chatbot />
+            </div>
+          </div>
+        )}
+        <button 
+          onClick={() => setIsChatbotOpen(!isChatbotOpen)}
+          className="w-14 h-14 text-white rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center transition-all duration-200 hover:scale-110"
+          style={{ backgroundColor: '#00d1b2' }}
+        >
+          <svg 
+            className="w-6 h-6"
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 };
