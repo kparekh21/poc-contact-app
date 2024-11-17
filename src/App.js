@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ContactSearchForm from './components/ContactSearchForm/ContactSearchForm';
 import ContactCard from './components/ContactCard/ContactCard';
+import Navbar from './components/Navbar/Navbar';
 import './App.css';
 
 const App = () => {
@@ -9,6 +10,7 @@ const App = () => {
   const [locationFilter, setLocationFilter] = useState('');
   const [repoFilter, setRepoFilter] = useState('');
   const [productFilter, setProductFilter] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0); // Track the current card index
 
   // Hardcoded data simulating API response
   const hardcodedContacts = [
@@ -47,7 +49,6 @@ const App = () => {
 
   // Simulate fetching all data after search
   const fetchAllContacts = () => {
-    // Simulate API call
     setContacts(hardcodedContacts);
     setFilteredContacts(hardcodedContacts);
   };
@@ -55,6 +56,7 @@ const App = () => {
   // Fetch all contacts on initial search (ContactSearchForm will call this)
   const handleSearch = () => {
     fetchAllContacts();
+    setCurrentIndex(0); // Reset to the first card on new search
   };
 
   // useEffect to apply filters whenever any dropdown filter changes
@@ -65,6 +67,7 @@ const App = () => {
       (!productFilter || contact.productName === productFilter)
     );
     setFilteredContacts(filtered);
+    setCurrentIndex(0); // Reset to the first card when filters change
   }, [locationFilter, repoFilter, productFilter, contacts]);
 
   // Extract unique values for dropdowns based on loaded data
@@ -72,8 +75,23 @@ const App = () => {
   const uniqueRepoNames = [...new Set(contacts.map(contact => contact.repoName))];
   const uniqueProductNames = [...new Set(contacts.map(contact => contact.productName))];
 
+  // Handle next and previous navigation
+  const handleNext = () => {
+    setCurrentIndex((prevIndex) =>
+      prevIndex < filteredContacts.length - 1 ? prevIndex + 1 : 0
+    );
+  };
+
+  const handlePrevious = () => {
+    setCurrentIndex((prevIndex) =>
+      prevIndex > 0 ? prevIndex - 1 : filteredContacts.length - 1
+    );
+  };
+
   return (
     <div className="app">
+       {/* Navbar */}
+       <Navbar />
       <div className="main-content">
         <ContactSearchForm onSearch={handleSearch} />
 
@@ -115,11 +133,31 @@ const App = () => {
               </select>
             </div>
 
-            {/* Horizontal Scrollable Container for Cards */}
-            <div className="flex overflow-x-auto space-x-4 p-4 scrollbar-hide">
-              {filteredContacts.map(contact => (
-                <ContactCard key={contact.email} contact={contact} />
-              ))}
+            {/* Carousel for Cards */}
+            <div className="relative flex items-center justify-center p-4">
+              {filteredContacts.length > 0 && (
+                <ContactCard contact={filteredContacts[currentIndex]} />
+              )}
+
+              {/* Left Arrow */}
+              {filteredContacts.length > 1 && (
+                <button
+                  onClick={handlePrevious}
+                  className="absolute left-4 p-2 bg-gray-800 text-white rounded-full"
+                >
+                  &#8592;
+                </button>
+              )}
+
+              {/* Right Arrow */}
+              {filteredContacts.length > 1 && (
+                <button
+                  onClick={handleNext}
+                  className="absolute right-4 p-2 bg-gray-800 text-white rounded-full"
+                >
+                  &#8594;
+                </button>
+              )}
             </div>
           </div>
         )}

@@ -34,7 +34,8 @@ const ContactSearchForm = ({ onSearch }) => {
 
   return (
     <div className="search-form">
-      <h2>Find Point Of Contact For Any Project</h2>
+      <h2>CollabConnect</h2>
+      <h3>Find Point Of Contact For Any Project</h3>
       <div className="search-options">
         <label>
           <input
